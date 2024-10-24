@@ -67,6 +67,7 @@ let DashMessage = require(`dashmessage`);
   DashMessage.encodeRecoverySig({ bytes, recovery, compressed }); // recSigBytes
   DashMessage.decodeRecoverySig(recoverySigBytes); // { bytes, recovery, compressed }
   ```
+
   (note: most of these have an optional `magicBytes` parameter)
 
 - Convenience Utils (base64, etc)
@@ -82,8 +83,6 @@ let DashMessage = require(`dashmessage`);
   DashMessage.utils.concatBytes(bytesList, totalLen); // bytes
   DashMessage.utils.toVarInt32(n); // bytes
   ```
-
-See [./bin/dashmessage](/bin/dashmessage) to see how the CLI is implemented.
 
 ## Boilerplate (you need this)
 
@@ -211,6 +210,8 @@ pushd ./DashMessage/
 
 npm clean-install
 ```
+
+See [./bin/dashmessage](/bin/dashmessage) to see how the CLI is implemented.
 
 ## Signing
 
