@@ -34,6 +34,8 @@
     "DASH",
     "secp256k1",
     "verify",
+    "vote",
+    "voting",
     "signed",
     "message",
     "messages",
