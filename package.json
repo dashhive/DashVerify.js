@@ -28,7 +28,7 @@
   "dependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dashhive/DashMessage.js.git"
+    "url": "git+https://github.com/digitalcashdev/DashMessage.js.git"
   },
   "keywords": [
     "DASH",
@@ -44,9 +44,9 @@
   "author": "AJ ONeal <aj@therootcompany.com> (https://therootcompany.com/)",
   "license": "SEE LICENSE IN LICENSE",
   "bugs": {
-    "url": "https://github.com/dashhive/DashMessage.js/issues"
+    "url": "https://github.com/digitalcashdev/DashMessage.js/issues"
   },
-  "homepage": "https://github.com/dashhive/DashMessage.js#readme",
+  "homepage": "https://github.com/digitalcashdev/DashMessage.js#readme",
   "devDependencies": {
     "@dashincubator/secp256k1": "^1.7.1-5",
     "@types/node": "^22.7.9",
