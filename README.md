@@ -15,7 +15,10 @@ if (equal === true) {
 
 ```sh
 # Dev CLI
-./bin/dashmessage verify 'XyBmeuLa8y3D3XmzPvCTj5PVh7WvMPkLn1' 'Hello, World!' '<signature>'
+printf 'Hello, World!' | base64
+# SGVsbG8sIFdvcmxkIQ==
+
+./bin/dashmessage verify 'XyBmeuLa8y3D3XmzPvCTj5PVh7WvMPkLn1' 'SGVsbG8sIFdvcmxkIQ==' '<signature>'
 ```
 
 # Table of Contents
@@ -64,10 +67,11 @@ let DashMessage = require(`dashmessage`);
   DashMessage.encodeRecoverySig({ bytes, recovery, compressed }); // recSigBytes
   DashMessage.decodeRecoverySig(recoverySigBytes); // { bytes, recovery, compressed }
   ```
+  (note: most of these have an optional `magicBytes` parameter)
 
 - Convenience Utils (base64, etc)
 
-  ```text
+  ```js
   DashMessage.utils.textEncoder.encode(str); // bytes
   DashMessage.utils.base64ToBytes(base64); // bytes
   DashMessage.utils.rfcBase64ToBytes(rfcBase64); // bytes
@@ -75,7 +79,7 @@ let DashMessage = require(`dashmessage`);
   DashMessage.utils.bytesToRfcBase64(bytes); // rfcBase64
 
   await DashMessage.utils.doubleSha256(bytes); // hashBytes
-  DashMessage.utils.concatBytes(bytesList, totalLen = 0); // bytes
+  DashMessage.utils.concatBytes(bytesList, totalLen); // bytes
   DashMessage.utils.toVarInt32(n); // bytes
   ```
 
@@ -161,13 +165,13 @@ import DashKeys from "dashkeys";
 import DashMessage from "dashmessage";
 
 async function mustVerify(address, messageText, sig) {
-  let pkhBytes = await DashKeys.addrToPkh(addr);
+  let pkhBytes = await DashKeys.addrToPkh(address);
   let messageBytes = DashMessage.utils.textEncoder.encode(messageText);
-  let recoverySigBytes = DashMessage.utils.bytesToRfcBase64(recoverySigBytes);
+  let recoverySigBytes = DashMessage.utils.base64ToBytes(sig);
 
   let isEqual = await DashMessage.magicVerify(
     pkhBytes,
-    messsageBytes,
+    messageBytes,
     recoverySigBytes,
     boilerplate.recoverPubkey,
     boilerplate.pubkeyToPkh,
