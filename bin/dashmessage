@@ -1,0 +1,198 @@
+#!/usr/bin/env node
+
+import Fs from "node:fs/promises";
+
+import DashKeys from "dashkeys";
+import DashMessage from "dashmessage";
+import Secp256k1 from "@dashincubator/secp256k1";
+//import { recoverPublicKey } from "@dashincubator/secp256k1";
+
+function showHelp() {
+  console.info(``);
+  console.info(`USAGE`);
+  console.info(`    dashmessage sign <path-to-wif> <base64-message>`);
+  console.info(
+    `    dashmessage verify <address> <base64-message> <base64-recovery-sig>`,
+  );
+  console.info(``);
+  console.info(`EXAMPLE`);
+  console.info(
+    `    my_msg="$(printf 'dte2022-akerdemelidis|estoever|mmason' | base64)"`,
+  );
+  console.info(``);
+  console.info(
+    `    dashmessage sign ./XhXvFAD9FSwGWxSNqUKoGP7ju1K9rsb5ja.wif "\${my_msg}"`,
+  );
+  console.info(``);
+
+  console.info(``);
+  console.info(`    dashmessage verify \\`);
+  console.info(`        'XhXvFAD9FSwGWxSNqUKoGP7ju1K9rsb5ja' \\`);
+  console.info(`        "\${my_msg}" \\`);
+  console.info(
+    `        'IMtDJ8uRFXphJzQG7q+w8RCe63ukOz/EJhDFRVPg0wspXRB7TBVNsw+5V4sHv70vlV2q/sd/Cy6nAE/6LA1Aueo='`,
+  );
+  console.info(``);
+  console.info(`OPTIONS`);
+  console.info(
+    `    --testnet  use the DASH testnet for Address & WIF encoding`,
+  );
+  console.info(``);
+}
+
+let network = "mainnet";
+
+// import DashKeys from "dashkeys";
+// import Secp256k1 from "@dashincubator/secp256k1";
+
+let boilerplate = {
+  signMessage: async function (privkeyBytes, hashBytes) {
+    let compressed = true;
+    let [bytes, recovery] = await Secp256k1.sign(hashBytes, privkeyBytes, {
+      extraEntropy: null, // for testing only, otherwise should be 'true'
+      canonical: true,
+      der: false,
+      recovered: true,
+    });
+    return { bytes, compressed, recovery };
+  },
+  recoverPubkey: async function (msgHash, signature, recovery, isCompressed) {
+    let pubkeyBytes = await Secp256k1.recoverPublicKey(
+      msgHash,
+      signature,
+      recovery,
+      isCompressed,
+    );
+    return pubkeyBytes;
+  },
+  pubkeyToPkh: async function (pubkeyBytes) {
+    let pkhBytes = await DashKeys.pubkeyToPkh(pubkeyBytes);
+    return pkhBytes;
+  },
+};
+
+async function main() {
+  let isTestnet = takeFlag(process.argv, [`--testnet`]);
+  if (isTestnet) {
+    network = "testnet";
+  }
+
+  let wantsHelp = takeFlag(process.argv, [`--help`, `help`]);
+  if (wantsHelp) {
+    showHelp();
+    return;
+  }
+
+  let cmd = process.argv[2]?.trim();
+  let addrOrWif = process.argv[3]?.trim();
+  let msg = process.argv[4]?.trim();
+  let recoverySig = process.argv[5]?.trim();
+
+  if (cmd === "sign") {
+    if (addrOrWif && msg) {
+      await sign(addrOrWif, msg);
+      return;
+    }
+  } else if (cmd === "verify") {
+    if (addrOrWif && msg && recoverySig) {
+      await verify(addrOrWif, msg, recoverySig);
+      return;
+    }
+  }
+
+  showHelp();
+  process.exit(1);
+}
+
+function takeFlag(argv, flags) {
+  let flagValue = null;
+
+  for (let flag of flags) {
+    let index = argv.indexOf(flag);
+    if (index === -1) {
+      continue;
+    }
+
+    flagValue = argv[index];
+    void argv.splice(index, 1);
+    break;
+  }
+
+  return flagValue;
+}
+
+async function sign(wifPath, msg) {
+  let wif = await Fs.readFile(wifPath, "utf8").catch(function (err) {
+    console.error(`not a valid WIF file: '${wifPath}'`);
+    process.exit(1);
+  });
+  wif = wif.trim();
+
+  let msgBytes;
+  try {
+    msgBytes = DashMessage.utils.base64ToBytes(msg);
+  } catch (e) {
+    showBase64Error(msg);
+    process.exit(1);
+    return;
+  }
+
+  let privBytes = await DashKeys.wifToPrivKey(wif, { version: network });
+  let recoverySigBytes = await DashMessage.magicSign(
+    privBytes,
+    msgBytes,
+    boilerplate.signMessage,
+    DashMessage.DASH_MAGIC_BYTES,
+  );
+  let recoverySig = DashMessage.utils.bytesToRfcBase64(recoverySigBytes);
+  console.info(recoverySig);
+}
+
+async function verify(addr, msg, recoverySig) {
+  let recoverySigBytes = DashMessage.utils.base64ToBytes(recoverySig);
+
+  let msgBytes;
+  try {
+    msgBytes = DashMessage.utils.base64ToBytes(msg);
+  } catch (e) {
+    showBase64Error(msg);
+    process.exit(1);
+    return;
+  }
+
+  let pkhBytes = await DashKeys.addrToPkh(addr);
+  let isEqual = await DashMessage.magicVerify(
+    pkhBytes,
+    msgBytes,
+    recoverySigBytes,
+    boilerplate.recoverPubkey,
+    boilerplate.pubkeyToPkh,
+  );
+  if (isEqual === true) {
+    console.info(`verified`);
+    return;
+  }
+
+  console.error(`failed verification: invalid address or invalid signature`);
+  process.exit(1);
+}
+
+function showBase64Error(msg) {
+  console.error(``);
+  console.error(`ERROR`);
+  console.error(`    could not decode ${msg} as base64`);
+  console.error(``);
+  console.error(`POSSIBLE SOLUTION`);
+  console.error(`    encode utf8 text as base64 before passing it in:`);
+  console.error(``);
+  console.error(`        printf '${msg}' | base64`);
+  console.error(``);
+  console.error(`    (do NOT use echo as it would add a trailing newline)`);
+  console.error(``);
+  process.exit(1);
+}
+
+main().catch(function (err) {
+  console.error("error: main():");
+  console.error(err.stack || err);
+});
