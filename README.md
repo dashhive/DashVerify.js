@@ -7,8 +7,10 @@ Used by the Dash network to Sign and Verify voting messages by DASH addresses.
 
 ```js
 // JS
-let result = await DashMessage.magicVerify(addr, msg, recSig, verifyFn, pkhFn);
-console.log(result.equal);
+let equal = await DashMessage.magicVerify(addr, msg, recSig, verifyFn, pkhFn);
+if (equal === true) {
+  console.log("verified");
+}
 ```
 
 ```sh
