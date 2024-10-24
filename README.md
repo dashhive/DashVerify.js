@@ -1,6 +1,6 @@
 # [DashMessage.js](https://github.com/digitalcashdev/DashMessage.js)
 
-_Electrum-Style Messaging Signing_ (a.k.a. _Satoshi-style Signing_), implemented
+_Electrum-Style Message Signing_ (a.k.a. _Satoshi-style Signing_), implemented
 in JavaScript.
 
 Used by the Dash network to Sign and Verify voting messages by DASH addresses.
