@@ -1,6 +1,6 @@
 {
   "name": "dashmessage",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Verify messages signed via DASH addresses.",
   "main": "dashmessage.js",
   "type": "module",
@@ -25,8 +25,7 @@
     "prepublish": "npm run reexport-types",
     "test": "node ./tests/"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dashhive/DashMessage.js.git"
